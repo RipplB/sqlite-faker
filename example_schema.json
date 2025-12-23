@@ -1,0 +1,74 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "constraints": "PRIMARY KEY AUTOINCREMENT"
+        },
+        {
+          "name": "username",
+          "type": "TEXT",
+          "faker": "user_name"
+        },
+        {
+          "name": "email",
+          "type": "TEXT",
+          "faker": "email"
+        },
+        {
+          "name": "first_name",
+          "type": "TEXT",
+          "faker": "first_name"
+        },
+        {
+          "name": "last_name",
+          "type": "TEXT",
+          "faker": "last_name"
+        },
+        {
+          "name": "age",
+          "type": "INTEGER",
+          "faker": "random_int(min=18, max=100)"
+        },
+        {
+          "name": "created_at",
+          "type": "TEXT",
+          "faker": "iso8601"
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "constraints": "PRIMARY KEY AUTOINCREMENT"
+        },
+        {
+          "name": "product_name",
+          "type": "TEXT",
+          "faker": "catch_phrase"
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "faker": "text"
+        },
+        {
+          "name": "price",
+          "type": "REAL",
+          "faker": "random_int(min=10, max=1000)"
+        },
+        {
+          "name": "stock",
+          "type": "INTEGER",
+          "faker": "random_int(min=0, max=500)"
+        }
+      ]
+    }
+  ]
+}
