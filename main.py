@@ -4,7 +4,9 @@ SQLite Faker - Generate SQLite databases with fake data using Faker library.
 """
 
 import argparse
+import ast
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -27,6 +29,86 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
         sys.exit(1)
 
 
+def parse_faker_arguments(args_string: str) -> Dict[str, Any]:
+    """
+    Safely parse Faker method arguments from string format.
+    
+    Args:
+        args_string: Arguments in format like "min=1, max=100" or "elements=('a', 'b')"
+    
+    Returns:
+        Dictionary of parsed arguments
+    """
+    kwargs = {}
+    
+    # Remove outer parentheses if present
+    args_string = args_string.strip()
+    
+    if not args_string:
+        return kwargs
+    
+    # Parse key=value pairs while respecting nested structures
+    i = 0
+    while i < len(args_string):
+        # Skip whitespace
+        while i < len(args_string) and args_string[i].isspace():
+            i += 1
+        
+        if i >= len(args_string):
+            break
+        
+        # Find key
+        key_start = i
+        while i < len(args_string) and (args_string[i].isalnum() or args_string[i] == '_'):
+            i += 1
+        key = args_string[key_start:i]
+        
+        # Skip whitespace and '='
+        while i < len(args_string) and (args_string[i].isspace() or args_string[i] == '='):
+            i += 1
+        
+        # Find value (handle nested parentheses)
+        value_start = i
+        paren_depth = 0
+        in_string = False
+        string_char = None
+        
+        while i < len(args_string):
+            char = args_string[i]
+            
+            if not in_string:
+                if char in ('"', "'"):
+                    in_string = True
+                    string_char = char
+                elif char == '(':
+                    paren_depth += 1
+                elif char == ')':
+                    paren_depth -= 1
+                elif char == ',' and paren_depth == 0:
+                    break
+            else:
+                if char == string_char and (i == 0 or args_string[i-1] != '\\'):
+                    in_string = False
+                    string_char = None
+            
+            i += 1
+        
+        value = args_string[value_start:i].strip()
+        
+        # Parse the value using ast.literal_eval for safety
+        try:
+            kwargs[key] = ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            # If it fails, treat as string
+            kwargs[key] = value.strip('"').strip("'")
+        
+        # Skip comma
+        if i < len(args_string) and args_string[i] == ',':
+            i += 1
+    
+    return kwargs
+
+
 def get_faker_value(fake: Faker, faker_method: str) -> Any:
     """
     Get a value from Faker using the specified method.
@@ -42,13 +124,19 @@ def get_faker_value(fake: Faker, faker_method: str) -> Any:
         # Check if method has arguments
         if '(' in faker_method:
             # Extract method name and arguments
-            method_name = faker_method.split('(')[0]
+            first_paren = faker_method.index('(')
+            last_paren = faker_method.rindex(')')
+            method_name = faker_method[:first_paren].strip()
+            args_part = faker_method[first_paren + 1:last_paren]
+            
             # Get the method
             method = getattr(fake, method_name)
-            # Execute the method string as code (with arguments)
-            # This is safe because we control the input
-            result = eval(f"method({faker_method.split('(', 1)[1]}")
-            return result
+            
+            # Parse arguments safely
+            kwargs = parse_faker_arguments(args_part)
+            
+            # Call method with parsed arguments
+            return method(**kwargs)
         else:
             # Simple method call without arguments
             method = getattr(fake, faker_method)
