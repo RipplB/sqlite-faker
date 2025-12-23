@@ -6,13 +6,30 @@ SQLite Faker - Generate SQLite databases with fake data using Faker library.
 import argparse
 import ast
 import json
-import re
 import sqlite3
 import sys
-from pathlib import Path
 from typing import Any, Dict, List
 
 from faker import Faker
+
+
+def is_valid_sql_identifier(name: str) -> bool:
+    """
+    Validate SQL identifier to prevent SQL injection.
+    
+    Args:
+        name: The identifier to validate
+    
+    Returns:
+        True if valid, False otherwise
+    """
+    # SQL identifiers should only contain alphanumeric characters and underscores
+    # and should not start with a number
+    if not name:
+        return False
+    if name[0].isdigit():
+        return False
+    return all(c.isalnum() or c == '_' for c in name)
 
 
 def load_schema(schema_path: str) -> Dict[str, Any]:
@@ -170,9 +187,20 @@ def get_sql_type(column_type: str) -> str:
 
 def create_table(conn: sqlite3.Connection, table_name: str, columns: List[Dict[str, Any]]) -> None:
     """Create a table in the SQLite database."""
+    # Validate table name
+    if not is_valid_sql_identifier(table_name):
+        print(f"Error: Invalid table name '{table_name}'. Table names must contain only alphanumeric characters and underscores, and cannot start with a number.")
+        sys.exit(1)
+    
     column_definitions = []
     for col in columns:
         col_name = col['name']
+        
+        # Validate column name
+        if not is_valid_sql_identifier(col_name):
+            print(f"Error: Invalid column name '{col_name}'. Column names must contain only alphanumeric characters and underscores, and cannot start with a number.")
+            sys.exit(1)
+        
         col_type = get_sql_type(col.get('type', 'TEXT'))
         constraints = col.get('constraints', '')
         column_def = f"{col_name} {col_type}"
@@ -205,12 +233,24 @@ def generate_data(fake: Faker, columns: List[Dict[str, Any]], num_rows: int) -> 
 
 def insert_data(conn: sqlite3.Connection, table_name: str, columns: List[Dict[str, Any]], data: List[tuple]) -> None:
     """Insert generated data into the table."""
-    # Filter out auto-increment columns
+    # Validate table name
+    if not is_valid_sql_identifier(table_name):
+        print(f"Error: Invalid table name '{table_name}'.")
+        sys.exit(1)
+    
+    # Filter out auto-increment columns and validate column names
     column_names = []
     for col in columns:
+        col_name = col['name']
+        
+        # Validate column name
+        if not is_valid_sql_identifier(col_name):
+            print(f"Error: Invalid column name '{col_name}'.")
+            sys.exit(1)
+        
         constraints = col.get('constraints', '').upper()
         if 'AUTOINCREMENT' not in constraints:
-            column_names.append(col['name'])
+            column_names.append(col_name)
     
     placeholders = ', '.join(['?' for _ in column_names])
     insert_sql = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({placeholders})"
