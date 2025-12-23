@@ -258,9 +258,13 @@ def insert_data(conn: sqlite3.Connection, table_name: str, columns: List[Dict[st
     conn.commit()
 
 
-def generate_database(schema: Dict[str, Any], num_rows: int, output_db: str = "output.db") -> None:
+def generate_database(schema: Dict[str, Any], num_rows: int, output_db: str = "output.db", locale: str = "en_US") -> None:
     """Generate the SQLite database based on the schema."""
-    fake = Faker()
+    try:
+        fake = Faker(locale)
+    except AttributeError:
+        print(f"Error: Invalid locale '{locale}'. Please use a valid Faker locale (e.g., en_US, es_ES, fr_FR, de_DE, ja_JP).")
+        sys.exit(1)
     
     # Create or connect to database
     conn = sqlite3.connect(output_db)
@@ -344,6 +348,13 @@ Example schema JSON:
         help='Output database file path (default: output.db)'
     )
     
+    parser.add_argument(
+        '-l', '--locale',
+        type=str,
+        default='en_US',
+        help='Locale for fake data generation (default: en_US). Examples: en_US, es_ES, fr_FR, de_DE, ja_JP'
+    )
+    
     args = parser.parse_args()
     
     # Validate number of rows
@@ -355,7 +366,7 @@ Example schema JSON:
     schema = load_schema(args.schema_file)
     
     # Generate database
-    generate_database(schema, args.num_rows, args.output)
+    generate_database(schema, args.num_rows, args.output, args.locale)
 
 
 if __name__ == "__main__":

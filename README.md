@@ -8,6 +8,7 @@ A Python application that generates SQLite databases filled with realistic fake 
 - 📋 Define database schema using simple JSON files
 - 🔧 Support for multiple tables and various data types
 - 🎯 Flexible Faker method integration with parameters
+- 🌍 Support for multiple locales/languages for generated data
 - ⚡ Built with `uv` for fast dependency management
 
 ## Installation
@@ -27,7 +28,7 @@ uv sync
 ## Usage
 
 ```bash
-uv run python main.py <schema_file> -n <num_rows> -o <output_db>
+uv run python main.py <schema_file> -n <num_rows> -o <output_db> -l <locale>
 ```
 
 ### Arguments
@@ -35,12 +36,41 @@ uv run python main.py <schema_file> -n <num_rows> -o <output_db>
 - `schema_file` (required): Path to JSON file describing the database schema
 - `-n, --num-rows` (optional): Number of rows to generate for each table (default: 10)
 - `-o, --output` (optional): Output database file path (default: output.db)
+- `-l, --locale` (optional): Locale for fake data generation (default: en_US)
 
-### Example
+### Examples
 
+#### Generate with default English locale
 ```bash
 uv run python main.py example_schema.json -n 100 -o mydata.db
 ```
+
+#### Generate with Spanish locale
+```bash
+uv run python main.py example_schema.json -n 100 -o mydata.db -l es_ES
+```
+
+#### Generate with French locale
+```bash
+uv run python main.py example_schema.json -n 100 -o mydata.db -l fr_FR
+```
+
+### Available Locales
+
+The application supports all Faker locales including:
+- `en_US` - English (United States) - **default**
+- `es_ES` - Spanish (Spain)
+- `fr_FR` - French (France)
+- `de_DE` - German (Germany)
+- `ja_JP` - Japanese (Japan)
+- `zh_CN` - Chinese (China)
+- `pt_BR` - Portuguese (Brazil)
+- `it_IT` - Italian (Italy)
+- `ru_RU` - Russian (Russia)
+- `ar_AA` - Arabic
+- And 95+ more locales!
+
+See the [Faker documentation](https://faker.readthedocs.io/en/master/locales.html) for a complete list of available locales.
 
 ## Schema File Format
 
@@ -112,16 +142,22 @@ See `example_schema.json` for a complete example with two tables (users and prod
 
 ## Examples
 
-### Generate a small test database
+### Generate a small test database (English)
 
 ```bash
 uv run python main.py example_schema.json -n 10 -o test.db
 ```
 
-### Generate a larger database
+### Generate a larger database with Spanish locale
 
 ```bash
-uv run python main.py example_schema.json -n 1000 -o production.db
+uv run python main.py example_schema.json -n 1000 -o production_es.db -l es_ES
+```
+
+### Generate with Japanese locale
+
+```bash
+uv run python main.py example_schema.json -n 100 -o japanese_data.db -l ja_JP
 ```
 
 ### Query the generated database
