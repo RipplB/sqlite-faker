@@ -262,9 +262,14 @@ def generate_database(schema: Dict[str, Any], num_rows: int, output_db: str = "o
     """Generate the SQLite database based on the schema."""
     try:
         fake = Faker(locale)
-    except AttributeError:
-        print(f"Error: Invalid locale '{locale}'. Please use a valid Faker locale (e.g., en_US, es_ES, fr_FR, de_DE, ja_JP).")
-        sys.exit(1)
+    except AttributeError as e:
+        # Check if it's a locale-related error
+        if "Invalid configuration for faker locale" in str(e):
+            print(f"Error: Invalid locale '{locale}'. Please use a valid Faker locale (e.g., en_US, es_ES, fr_FR, de_DE, ja_JP).")
+            sys.exit(1)
+        else:
+            # Re-raise if it's a different AttributeError
+            raise
     
     # Create or connect to database
     conn = sqlite3.connect(output_db)
